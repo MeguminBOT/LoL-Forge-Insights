@@ -1,12 +1,10 @@
 package forge.data;
 
 /**
- * Fetches data from Meraki Analytics CDN (champions + items).
- * DDragon is used only for the version number and image URLs.
+ * Loads champion/item data from bundled local files.
+ * No external CDN calls — everything is shipped with the build.
  */
 class BrowserDataProvider implements IDataProvider {
-	static final DDRAGON = "https://ddragon.leagueoflegends.com";
-
 	var cachedChampions:Dynamic = null;
 	var cachedItems:Dynamic = null;
 	var dataRoot:String;
@@ -16,9 +14,15 @@ class BrowserDataProvider implements IDataProvider {
 	}
 
 	public function getVersion(cb:(String) -> Void):Void {
-		fetchJson('$DDRAGON/api/versions.json', function(data:Dynamic) {
-			var versions:Array<String> = data;
-			cb(versions[0]);
+		#if js
+		var embedded:Dynamic = js.Syntax.code("window.__MERAKI_VERSION__");
+		if (embedded != null) {
+			cb(Std.string(embedded));
+			return;
+		}
+		#end
+		fetchText('$dataRoot/version.txt', function(text:String) {
+			cb(StringTools.trim(text));
 		});
 	}
 
@@ -77,11 +81,11 @@ class BrowserDataProvider implements IDataProvider {
 	}
 
 	public function championImageUrl(version:String, filename:String):String {
-		return '$DDRAGON/cdn/$version/img/champion/$filename';
+		return 'img/champion/$filename';
 	}
 
 	public function itemImageUrl(version:String, filename:String):String {
-		return '$DDRAGON/cdn/$version/img/item/$filename';
+		return 'img/item/$filename';
 	}
 
 	// ── Data loaders ─────────────────────────────────────────────────────────
@@ -125,6 +129,24 @@ class BrowserDataProvider implements IDataProvider {
 	}
 
 	// ── XHR fetch ────────────────────────────────────────────────────────────
+
+	static function fetchText(url:String, cb:(String) -> Void):Void {
+		#if js
+		var xhr = new js.html.XMLHttpRequest();
+		xhr.open("GET", url);
+		xhr.onload = function(_) {
+			if (xhr.status == 200 || xhr.status == 0) {
+				cb(xhr.responseText);
+			} else {
+				trace('HTTP error ${xhr.status} for $url');
+			}
+		};
+		xhr.onerror = function(_) {
+			trace('Network error for $url');
+		};
+		xhr.send();
+		#end
+	}
 
 	static function fetchJson(url:String, cb:(Dynamic) -> Void):Void {
 		#if js

@@ -1,0 +1,88 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.6
+
+      - name: Install Haxe dependencies
+        run: |
+          haxelib install hxcpp --quiet || true
+          yes | haxelib install format --quiet || true
+
+      - name: Compile browser JS
+        run: haxe config/browser.hxml
+
+      - name: Assemble site
+        run: |
+          mkdir -p build/browser/data build/browser/img build/browser/fonts
+
+          # Fix script paths in index.html for deployed context
+          python3 -c "
+          from pathlib import Path
+          html = Path('assets/index.html').read_text()
+          html = html.replace('../build/browser/', '')
+          Path('build/browser/index.html').write_text(html)
+          "
+
+          # Generate meraki-data.js from committed JSON
+          python3 -c "
+          from pathlib import Path
+          import json
+          champs = Path('data/meraki-champions.json').read_text()
+          items  = Path('data/meraki-items.json').read_text()
+          ver    = Path('data/version.txt').read_text().strip()
+          out = f'window.__MERAKI_VERSION__={json.dumps(ver)};\n'
+          out += f'window.__MERAKI_CHAMPIONS__={champs};\n'
+          out += f'window.__MERAKI_ITEMS__={items};\n'
+          ov = Path('data/overrides.json')
+          if ov.exists():
+              out += f'window.__MERAKI_OVERRIDES__={ov.read_text()};\n'
+          Path('build/browser/data/meraki-data.js').write_text(out)
+          "
+
+          # Copy assets
+          cp -r assets/img/*   build/browser/img/   2>/dev/null || true
+          cp -r assets/fonts/* build/browser/fonts/  2>/dev/null || true
+
+          # Copy data files (XHR fallback)
+          cp data/meraki-champions.json build/browser/data/
+          cp data/meraki-items.json     build/browser/data/
+          cp data/version.txt           build/browser/data/
+          cp data/overrides.json        build/browser/data/ 2>/dev/null || true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

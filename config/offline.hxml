@@ -1,6 +1,0 @@
--cp src
--main forge.Main
--js build/offline/forge-offline.js
--D js-unflatten
--D offline
--D no-traces

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+	<meta title="Forge Insight" company="LoL-Forge-Insights" version="0.1.0" />
+
+	<app main="forge.desktop.DesktopMain" file="ForgeInsight" path="build/desktop" />
+
+	<source path="src" />
+
+	<haxelib name="openfl" />
+	<haxelib name="haxeui-openfl" />
+	<haxelib name="haxeui-core" />
+
+	<haxedefine name="desktop" />
+
+	<window title="Forge Insight — LoL Item Synergy"
+	        width="1280" height="800"
+	        fps="60"
+	        background="#08080E"
+	        resizable="true"
+	        vsync="true" />
+
+	<icon path="assets/icon.png" if="exists" />
+</project>

@@ -19,6 +19,7 @@ const DDRAGON = "https://ddragon.leagueoflegends.com";
 const MERAKI =
 	"https://cdn.merakianalytics.com/riot/lol/resources/latest/en-US";
 const DATA_DIR = path.join(__dirname, "..", "data");
+const ASSETS_IMG = path.join(__dirname, "..", "assets", "img");
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -133,13 +134,13 @@ async function main() {
 	const itemKeys = Object.keys(itemData);
 	console.log(`  ${itemKeys.length} items`);
 
-	// 4. Champion images (from DDragon)
+	// 4. Champion images (from DDragon) -> assets/img/champion/
 	console.log("Downloading champion images...");
-	mkdir(path.join(DATA_DIR, "img", "champion"));
+	mkdir(path.join(ASSETS_IMG, "champion"));
 	const champImgTasks = champKeys.map((key) => {
 		const filename = key + ".png";
 		return async () => {
-			const dest = path.join(DATA_DIR, "img", "champion", filename);
+			const dest = path.join(ASSETS_IMG, "champion", filename);
 			await fetchBinary(
 				`${DDRAGON}/cdn/${version}/img/champion/${filename}`,
 				dest,
@@ -150,15 +151,15 @@ async function main() {
 	await downloadPool(champImgTasks, 12);
 	console.log("\n  Done.");
 
-	// 5. Item images (from DDragon)
+	// 5. Item images (from DDragon) -> assets/img/item/
 	console.log("Downloading item images...");
-	mkdir(path.join(DATA_DIR, "img", "item"));
+	mkdir(path.join(ASSETS_IMG, "item"));
 	const itemImgTasks = itemKeys.map((key) => {
 		const item = itemData[key];
 		const id = item.id;
 		const filename = id + ".png";
 		return async () => {
-			const dest = path.join(DATA_DIR, "img", "item", filename);
+			const dest = path.join(ASSETS_IMG, "item", filename);
 			await fetchBinary(
 				`${DDRAGON}/cdn/${version}/img/item/${filename}`,
 				dest,
@@ -167,6 +168,55 @@ async function main() {
 		};
 	});
 	await downloadPool(itemImgTasks, 12);
+	console.log("\n  Done.");
+
+	// 5b. Spell images (from DDragon) -> assets/img/spell/
+	console.log("Downloading spell images...");
+	mkdir(path.join(ASSETS_IMG, "spell"));
+	const spellUrl = `${DDRAGON}/cdn/${version}/data/en_US/champion.json`;
+	const ddragonChamps = await fetchJson(spellUrl);
+	const spellFilenames = new Set();
+	for (const [, champ] of Object.entries(ddragonChamps.data)) {
+		for (const spell of champ.spells || []) {
+			if (spell.image && spell.image.full) spellFilenames.add(spell.image.full);
+		}
+		if (champ.passive && champ.passive.image && champ.passive.image.full) {
+			spellFilenames.add(champ.passive.image.full);
+		}
+	}
+	const spellImgTasks = [...spellFilenames].map((filename) => {
+		return async () => {
+			const dest = path.join(ASSETS_IMG, "spell", filename);
+			await fetchBinary(
+				`${DDRAGON}/cdn/${version}/img/spell/${filename}`,
+				dest,
+			);
+			process.stdout.write(".");
+		};
+	});
+	await downloadPool(spellImgTasks, 12);
+	console.log("\n  Done.");
+
+	// 5c. Passive images (from DDragon) -> assets/img/passive/
+	console.log("Downloading passive images...");
+	mkdir(path.join(ASSETS_IMG, "passive"));
+	const passiveFilenames = new Set();
+	for (const [, champ] of Object.entries(ddragonChamps.data)) {
+		if (champ.passive && champ.passive.image && champ.passive.image.full) {
+			passiveFilenames.add(champ.passive.image.full);
+		}
+	}
+	const passiveImgTasks = [...passiveFilenames].map((filename) => {
+		return async () => {
+			const dest = path.join(ASSETS_IMG, "passive", filename);
+			await fetchBinary(
+				`${DDRAGON}/cdn/${version}/img/passive/${filename}`,
+				dest,
+			);
+			process.stdout.write(".");
+		};
+	});
+	await downloadPool(passiveImgTasks, 12);
 	console.log("\n  Done.");
 
 	// 6. Generate meraki-data.js for browser (embeds data as JS globals)
@@ -191,7 +241,7 @@ async function main() {
 		path.join(browserDataDir, "version.txt"),
 	);
 
-	const dataJs = `window.__MERAKI_CHAMPIONS__=${champText};\nwindow.__MERAKI_ITEMS__=${itemText};\n`;
+	const dataJs = `window.__MERAKI_VERSION__=${JSON.stringify(version)};\nwindow.__MERAKI_CHAMPIONS__=${champText};\nwindow.__MERAKI_ITEMS__=${itemText};\n`;
 	// Append overrides if the combined overrides.json exists
 	const overridesPath = path.join(DATA_DIR, "overrides.json");
 	const overridesSnippet =

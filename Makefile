@@ -6,62 +6,54 @@ BUILD    := build
 CONFIG   := config
 SCRIPTS  := scripts
 
-.PHONY: all browser offline data serve clean
+.PHONY: all browser desktop data serve clean generate
 
-## Build both targets
-all: browser offline cpp
+## Build all targets
+all: browser desktop
 
 ## Compile for browser / GitHub Pages
 browser:
 	@echo "Building browser target…"
 	@mkdir -p $(BUILD)/browser
 	$(HAXE) $(CONFIG)/browser.hxml
-	@echo "Copying index file into browser output folder…"
+	@echo "Copying index + assets into browser output…"
 	@python - <<'PY'
 from pathlib import Path
 src = Path('assets/index.html')
-path = src.read_text(encoding='utf-8')
-path = path.replace('../build/browser/forge.js','forge.js')
-Path('build/browser/index.html').write_text(path, encoding='utf-8')
+html = src.read_text(encoding='utf-8')
+html = html.replace('../build/browser/','')
+Path('build/browser/index.html').write_text(html, encoding='utf-8')
 PY
-	@echo "✓ build/browser/forge.js + build/browser/index.html ready"
+	@cp -r assets/img $(BUILD)/browser/img 2>/dev/null || true
+	@cp -r assets/fonts $(BUILD)/browser/fonts 2>/dev/null || true
+	@cp data/meraki-champions.json $(BUILD)/browser/data/ 2>/dev/null || true
+	@cp data/meraki-items.json $(BUILD)/browser/data/ 2>/dev/null || true
+	@cp data/version.txt $(BUILD)/browser/data/ 2>/dev/null || true
+	@echo "✓ build/browser/ ready"
 
-## Compile offline variant (same JS engine, served locally)
-offline:
-	@echo "Building offline target…"
-	@mkdir -p $(BUILD)/offline
-	$(HAXE) $(CONFIG)/offline.hxml
-	@echo "Copying index file into offline output folder…"
-	@python - <<'PY'
-from pathlib import Path
-src = Path('assets/index.html')
-path = src.read_text(encoding='utf-8')
-path = path.replace('../build/browser/forge.js','../build/offline/forge-offline.js')
-Path('build/offline/index.html').write_text(path, encoding='utf-8')
-PY
-	@echo "✓ build/offline/forge-offline.js + build/offline/index.html ready"
+## Build desktop (OpenFL + HaxeUI)
+desktop:
+	@echo "Building desktop target…"
+	lime build project.xml windows
+	@mkdir -p $(BUILD)/desktop/windows/bin/data
+	@mkdir -p $(BUILD)/desktop/windows/bin/img
+	@cp -r assets/img/* $(BUILD)/desktop/windows/bin/img/ 2>/dev/null || true
+	@cp -r assets/fonts $(BUILD)/desktop/windows/bin/fonts 2>/dev/null || true
+	@cp data/meraki-champions.json $(BUILD)/desktop/windows/bin/data/ 2>/dev/null || true
+	@cp data/meraki-items.json $(BUILD)/desktop/windows/bin/data/ 2>/dev/null || true
+	@cp data/version.txt $(BUILD)/desktop/windows/bin/data/ 2>/dev/null || true
+	@echo "✓ Desktop build ready"
 
-## Compile C++ native binary
-cpp:
-	@echo "Building C++ target…"
-	@mkdir -p $(BUILD)/cpp
-	$(HAXE) $(CONFIG)/cpp.hxml
-	@echo "✓ C++ native output ready in $(BUILD)/cpp"
-
-## Download all Data Dragon assets into data/
+## Download Meraki data + images into data/ and assets/img/
 data:
-	@echo "Fetching Data Dragon assets…"
+	@echo "Fetching game data…"
 	$(NODE) $(SCRIPTS)/fetch-data.js
 
-## Fetch a specific patch version: make data VERSION=14.9.1
-data-version:
-	$(NODE) $(SCRIPTS)/fetch-data.js $(VERSION)
-
-## Start local server (offline mode)
+## Start local dev server
 serve:
 	$(NODE) $(SCRIPTS)/serve-local.js
 
-## Generate static champion JSON files (profile + synergy data per champion)
+## Generate static champion JSON files
 generate: cpp-generate
 	@echo "Running champion data generator…"
 	./$(BUILD)/generate/GenerateChampionData
@@ -75,4 +67,4 @@ cpp-generate:
 
 ## Remove compiled output
 clean:
-	rm -rf $(BUILD) forge.js forge-offline.js
+	rm -rf $(BUILD)

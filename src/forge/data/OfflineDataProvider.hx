@@ -90,11 +90,11 @@ class OfflineDataProvider implements IDataProvider {
 	}
 
 	public function championImageUrl(version:String, filename:String):String {
-		return '$dataRoot/img/champion/$filename';
+		return 'img/champion/$filename';
 	}
 
 	public function itemImageUrl(version:String, filename:String):String {
-		return '$dataRoot/img/item/$filename';
+		return 'img/item/$filename';
 	}
 
 	// ── Data loaders (cached) ────────────────────────────────────────────────

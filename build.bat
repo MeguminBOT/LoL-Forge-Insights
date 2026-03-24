@@ -3,13 +3,10 @@ REM Forge Insight — Build All Targets
 echo === Building all targets ===
 echo.
 
-call "%~dp0build-browser.bat"
+call "%~dp0scripts\build-browser.bat"
 if errorlevel 1 goto :fail
 
-call "%~dp0build-offline.bat"
-if errorlevel 1 goto :fail
-
-call "%~dp0build-cpp.bat"
+call "%~dp0scripts\build-desktop.bat"
 if errorlevel 1 goto :fail
 
 echo.
