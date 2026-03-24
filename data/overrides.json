@@ -1,0 +1,14 @@
+{
+	"Yasuo": {
+		"3085": {
+			"tier": "Good",
+			"reason": "Yasuo's Wind Wall and crit passive interact with Runaan's bolts"
+		}
+	},
+	"Yone": {
+		"3085": {
+			"tier": "Good",
+			"reason": "Yone's crit passive and melee windwall interaction work with Runaan's"
+		}
+	}
+}

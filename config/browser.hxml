@@ -1,0 +1,5 @@
+-cp src
+-main forge.Main
+-js build/browser/forge.js
+-D js-unflatten
+-D no-traces

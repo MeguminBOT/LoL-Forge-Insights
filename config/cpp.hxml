@@ -1,0 +1,4 @@
+-cp src
+-main forge.Main
+-cpp build/cpp
+--no-traces

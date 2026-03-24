@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forge Insight — LoL Item Synergy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & base ──────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --gold:        #C89B3C;
+  --gold-light:  #F0E6C8;
+  --gold-dim:    #7A5C1E;
+  --bg-dark:     #08080E;
+  --bg-panel:    #0D0D18;
+  --bg-card:     #111120;
+  --bg-item:     #161625;
+  --border-g:    rgba(200,155,60,.25);
+  --border-gb:   rgba(200,155,60,.6);
+  --text-p:      #DDD0A8;
+  --text-s:      #807060;
+  --text-m:      #3A3630;
+
+  /* synergy tier colours */
+  --c-core-bg:   #1A2A10; --c-core-bd: #3A6A1A; --c-core-tx: #80EE50;
+  --c-good-bg:   #102A15; --c-good-bd: #1A6030; --c-good-tx: #50DA80;
+  --c-sit-bg:    #1A1A0E; --c-sit-bd:  #4A4A1A; --c-sit-tx:  #C8C050;
+  --c-weak-bg:   #2A1510; --c-weak-bd: #603020; --c-weak-tx: #DA8050;
+  --c-trap-bg:   #2A1010; --c-trap-bd: #6A1A1A; --c-trap-tx: #EE5050;
+}
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg-dark);
+  color: var(--text-p);
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* ── Scrollbars ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: var(--border-g); border-radius: 2px; }
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+#app {
+  display: grid;
+  grid-template-rows: 60px 1fr;
+  height: 100vh;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--border-g);
+  background: linear-gradient(180deg, rgba(200,155,60,.06) 0%, transparent 100%);
+  flex-shrink: 0;
+}
+
+.logo {
+  font-family: 'Cinzel', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: .08em;
+  white-space: nowrap;
+}
+
+.logo-sub {
+  font-size: .65rem;
+  color: var(--text-s);
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.header-sep { width: 1px; height: 28px; background: var(--border-g); }
+
+.mode-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.mode-tab {
+  padding: 4px 10px;
+  border: 1px solid var(--border-g);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-s);
+  cursor: pointer;
+  font-size: .68rem;
+  font-family: 'Nunito Sans', sans-serif;
+  letter-spacing: .04em;
+  transition: all .15s;
+}
+.mode-tab:hover  { border-color: var(--gold-dim); color: var(--text-p); }
+.mode-tab.active { background: rgba(200,155,60,.12); border-color: var(--gold); color: var(--gold); }
+
+.main-layout {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  overflow: hidden;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────────────────── */
+aside {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-g);
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+
+.sidebar-section {
+  padding: .65rem .75rem;
+  border-bottom: 1px solid rgba(200,155,60,.08);
+  flex-shrink: 0;
+}
+
+.section-label {
+  font-family: 'Cinzel', serif;
+  font-size: .58rem;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  color: var(--text-s);
+  margin-bottom: .4rem;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-g);
+  color: var(--text-p);
+  padding: .42rem .65rem;
+  border-radius: 3px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: .8rem;
+  outline: none;
+  transition: border-color .2s;
+}
+.search-input:focus { border-color: var(--gold); }
+.search-input::placeholder { color: var(--text-m); }
+
+.champion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  grid-auto-rows: minmax(78px, auto);
+  gap: 4px;
+  padding: .6rem;
+  overflow-y: auto;
+  flex: 1;
+  align-items: start;
+}
+.champ-portrait {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-card);
+  transition: border-color .12s, transform .1s;
+}
+.champ-portrait:hover   { border-color: var(--gold-dim); transform: scale(1.04); }
+.champ-portrait.selected { border-color: var(--gold); box-shadow: 0 0 6px rgba(200,155,60,.35); }
+.champ-portrait img     { width: 100%; height: 100%; object-fit: cover; display: block; }
+.champ-portrait .champ-name {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,.75); font-size: .48rem;
+  text-align: center; padding: 2px; color: var(--text-p);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── Content area ───────────────────────────────────────────────────────── */
+.content-area {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Champion info bar ──────────────────────────────────────────────────── */
+#championInfoBar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: .75rem 1.25rem;
+  border-bottom: 1px solid var(--border-g);
+  background: var(--bg-panel);
+  min-height: 80px;
+  flex-shrink: 0;
+}
+
+.champ-big-portrait {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.champ-details h2 {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: var(--gold);
+  line-height: 1.2;
+}
+
+.champ-title {
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: .7rem;
+  color: var(--text-s);
+  font-weight: 400;
+}
+
+.champ-tags { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+
+.champ-tag {
+  font-size: .6rem;
+  padding: 1px 7px;
+  border: 1px solid var(--border-g);
+  border-radius: 2px;
+  color: var(--text-s);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.stat-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+  font-size: .68rem;
+  color: var(--text-s);
+  flex-wrap: wrap;
+}
+.stat-row b { color: var(--text-p); font-weight: 600; }
+
+.profile-badges { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+
+.badge {
+  font-size: .58rem;
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+.badge-ap       { background: #1A0A2A; border: 1px solid #6A20AA; color: #CC80FF; }
+.badge-ad       { background: #2A1500; border: 1px solid #AA6020; color: #FFBB60; }
+.badge-onhit    { background: #001A2A; border: 1px solid #1060AA; color: #60C0FF; }
+.badge-mobility { background: #002A1A; border: 1px solid #10AA60; color: #60FFAA; }
+.badge-shield   { background: #00102A; border: 1px solid #1040AA; color: #4080FF; }
+.badge-heal     { background: #0A2000; border: 1px solid #40AA10; color: #80FF40; }
+.badge-cc       { background: #2A000A; border: 1px solid #AA1040; color: #FF4080; }
+.badge-execute  { background: #2A0A00; border: 1px solid #AA3000; color: #FF7040; }
+.badge-stealth  { background: #1A1A1A; border: 1px solid #606060; color: #C0C0C0; }
+.badge-manaless { background: #100A00; border: 1px solid #605020; color: #C0A040; }
+
+/* ── Items toolbar ──────────────────────────────────────────────────────── */
+#itemsToolbar {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: .45rem 1.25rem;
+  border-bottom: 1px solid rgba(200,155,60,.08);
+  background: var(--bg-panel);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 3px 10px;
+  border: 1px solid var(--border-g);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-s);
+  cursor: pointer;
+  font-size: .68rem;
+  font-family: 'Nunito Sans', sans-serif;
+  transition: all .12s;
+}
+.filter-btn:hover { color: var(--text-p); }
+.filter-btn.f-all.active        { background: rgba(200,155,60,.1); border-color: var(--gold); color: var(--gold); }
+.filter-btn.f-core.active       { background: var(--c-core-bg);  border-color: var(--c-core-bd); color: var(--c-core-tx); }
+.filter-btn.f-good.active       { background: var(--c-good-bg);  border-color: var(--c-good-bd); color: var(--c-good-tx); }
+.filter-btn.f-situational.active{ background: var(--c-sit-bg);   border-color: var(--c-sit-bd);  color: var(--c-sit-tx);  }
+.filter-btn.f-weak.active       { background: var(--c-weak-bg);  border-color: var(--c-weak-bd); color: var(--c-weak-tx); }
+.filter-btn.f-trap.active       { background: var(--c-trap-bg);  border-color: var(--c-trap-bd); color: var(--c-trap-tx); }
+
+.search-items {
+  flex: 1; max-width: 200px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-g);
+  color: var(--text-p);
+  padding: 3px 9px;
+  border-radius: 3px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: .75rem;
+  outline: none;
+}
+.search-items::placeholder { color: var(--text-m); }
+
+.legend {
+  margin-left: auto;
+  display: flex; gap: 10px;
+  font-size: .64rem; color: var(--text-s); align-items: center;
+  flex-wrap: wrap;
+}
+.leg-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 3px; }
+
+/* ── Main content ───────────────────────────────────────────────────────── */
+#mainContent {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.placeholder {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  flex: 1; gap: .65rem; text-align: center; padding: 2rem;
+  color: var(--text-m);
+}
+.placeholder-icon { font-size: 2rem; opacity: .35; }
+.placeholder p    { font-size: .8rem; line-height: 1.7; }
+.placeholder span { color: var(--text-s); }
+
+.hint-text { font-size: .78rem; color: var(--text-m); }
+
+.synergy-stats {
+  padding: .35rem 1.25rem;
+  font-size: .68rem;
+  color: var(--text-s);
+  border-bottom: 1px solid rgba(200,155,60,.06);
+  background: var(--bg-panel);
+  flex-shrink: 0;
+}
+.ss-core  { color: var(--c-core-tx); font-weight: 600; }
+.ss-good  { color: var(--c-good-tx); font-weight: 600; }
+.ss-sit   { color: var(--c-sit-tx);  font-weight: 600; }
+.ss-weak  { color: var(--c-weak-tx); font-weight: 600; }
+.ss-trap  { color: var(--c-trap-tx); font-weight: 600; }
+.ss-mode  { color: var(--gold-dim); }
+
+/* ── Items grid ─────────────────────────────────────────────────────────── */
+.category-section {
+  margin-bottom: .25rem;
+}
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: .4rem 1.25rem;
+  margin-top: .15rem;
+  border-bottom: 1px solid var(--border-g);
+  font-family: 'Cinzel', serif;
+}
+.cat-label {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--gold-light);
+  letter-spacing: .03em;
+}
+.cat-count {
+  font-size: .65rem;
+  color: var(--text-s);
+  font-family: 'Nunito Sans', sans-serif;
+}
+.cat-mage .cat-label      { color: #7BA4F0; }
+.cat-assassin .cat-label   { color: #E06060; }
+.cat-marksman .cat-label   { color: #E0A050; }
+.cat-fighter .cat-label    { color: #C89B3C; }
+.cat-tank .cat-label       { color: #80A8C0; }
+.cat-support .cat-label    { color: #60D0A0; }
+.cat-boots .cat-label      { color: #B088D0; }
+.cat-other .cat-label      { color: var(--text-s); }
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: 5px;
+  padding: .85rem 1.25rem;
+  align-content: start;
+}
+
+.item-card {
+  background: var(--bg-item);
+  border: 1px solid var(--border-g);
+  border-radius: 4px;
+  padding: 5px;
+  cursor: default;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  transition: border-color .12s, transform .1s;
+}
+.item-card:hover { border-color: var(--gold-dim); transform: translateY(-1px); }
+.item-card img   { width: 44px; height: 44px; border-radius: 3px; display: block; }
+.item-name       { font-size: .5rem; color: var(--text-s); line-height: 1.25; word-break: break-word; }
+
+.item-card.tier-core { background: var(--c-core-bg); border-color: var(--c-core-bd); }
+.item-card.tier-core .item-name { color: var(--c-core-tx); }
+.item-card.tier-good { background: var(--c-good-bg); border-color: var(--c-good-bd); }
+.item-card.tier-good .item-name { color: var(--c-good-tx); }
+.item-card.tier-sit  { background: var(--c-sit-bg);  border-color: var(--c-sit-bd); }
+.item-card.tier-sit  .item-name { color: var(--c-sit-tx); }
+.item-card.tier-weak { background: var(--c-weak-bg); border-color: var(--c-weak-bd); opacity: .75; }
+.item-card.tier-weak .item-name { color: var(--c-weak-tx); }
+.item-card.tier-trap { background: var(--c-trap-bg); border-color: var(--c-trap-bd); opacity: .6; }
+.item-card.tier-trap .item-name { color: var(--c-trap-tx); }
+
+.syn-badge {
+  position: absolute; top: -4px; right: -4px;
+  width: 15px; height: 15px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 700; line-height: 1;
+}
+.syn-badge.core { background: var(--c-core-tx); color: #050F00; }
+.syn-badge.good { background: var(--c-good-tx); color: #000F05; }
+.syn-badge.weak { background: var(--c-weak-tx); color: #150500; }
+.syn-badge.trap { background: var(--c-trap-tx); color: #150000; }
+
+/* ── Tooltip ────────────────────────────────────────────────────────────── */
+.item-tooltip {
+  position: fixed; z-index: 9999;
+  background: var(--bg-card);
+  border: 1px solid var(--gold);
+  border-radius: 5px;
+  padding: .75rem;
+  max-width: 270px;
+  pointer-events: none;
+  display: none;
+  box-shadow: 0 4px 24px rgba(0,0,0,.85);
+}
+.item-tooltip.visible { display: block; }
+
+.tt-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; gap: 8px; }
+.tt-name   { font-family: 'Cinzel', serif; font-size: .82rem; color: var(--gold); }
+.tt-cost   { font-size: .66rem; color: var(--gold-dim); white-space: nowrap; }
+.tt-desc   { font-size: .68rem; color: var(--text-s); line-height: 1.55; }
+
+.tt-kit {
+  margin-top: 5px;
+  font-size: .6rem;
+  color: var(--gold-dim);
+  letter-spacing: .03em;
+}
+
+.tt-reasons {
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid var(--border-g);
+  font-size: .67rem; line-height: 1.55;
+}
+.tt-reasons strong { display: block; margin-bottom: 4px; font-size: .68rem; }
+.tt-reasons ul     { list-style: disc; padding-left: 14px; }
+.tt-reasons li     { margin-bottom: 2px; }
+.tt-reasons.pos strong { color: var(--c-good-tx); }
+.tt-reasons.neg strong { color: var(--c-weak-tx); }
+.tt-reasons.neu strong { color: var(--c-sit-tx); }
+.tt-reasons.pos li     { color: var(--c-good-tx); }
+.tt-reasons.neg li     { color: var(--c-weak-tx); }
+.tt-reasons.neu li     { color: var(--c-sit-tx); }
+.tt-reasons li.pos     { color: var(--c-good-tx); }
+.tt-reasons li.neg     { color: var(--c-weak-tx); }
+.tt-reasons em         { color: var(--text-m); }
+
+/* ── Loading ─────────────────────────────────────────────────────────────── */
+.loading-msg {
+  grid-column: 1/-1;
+  text-align: center; padding: 2rem;
+  color: var(--text-m); font-size: .75rem;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <div class="logo">⚔ FORGE INSIGHT</div>
+      <div class="logo-sub">LoL Item Synergy Analyzer</div>
+    </div>
+    <div class="header-sep"></div>
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="CLASSIC">Summoner's Rift</button>
+      <button class="mode-tab" data-mode="ARAM">ARAM</button>
+      <button class="mode-tab" data-mode="MAYHEM">Mayhem</button>
+      <button class="mode-tab" data-mode="BRAWL">Brawl</button>
+      <button class="mode-tab" data-mode="CHERRY">Arena</button>
+      <button class="mode-tab" data-mode="URF">URF</button>
+      <button class="mode-tab" data-mode="ONEFORALL">One for All</button>
+      <button id="refetchChampions" class="mode-tab">Refresh Data</button>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <aside>
+      <div class="sidebar-section">
+        <div class="section-label">Champion</div>
+        <input class="search-input" type="text" id="champSearch" placeholder="Search…" autocomplete="off">
+      </div>
+      <div class="champion-grid" id="championGrid">
+        <div class="loading-msg">Loading…</div>
+      </div>
+    </aside>
+
+    <div class="content-area">
+      <div id="championInfoBar">
+        <p class="hint-text">← Select a champion to begin</p>
+      </div>
+
+      <div id="itemsToolbar">
+        <button class="filter-btn f-all active" data-filter="all">All</button>
+        <button class="filter-btn f-core" data-filter="core">★ Core</button>
+        <button class="filter-btn f-good" data-filter="good">✓ Good</button>
+        <button class="filter-btn f-situational" data-filter="situational">◎ Situational</button>
+        <button class="filter-btn f-weak" data-filter="weak">− Weak</button>
+        <button class="filter-btn f-trap" data-filter="trap">✗ Trap</button>
+        <input class="search-items" type="text" id="itemSearch" placeholder="Filter items…" autocomplete="off">
+        <div class="legend">
+          <span><span class="leg-dot" style="background:var(--c-core-tx)"></span>Core</span>
+          <span><span class="leg-dot" style="background:var(--c-good-tx)"></span>Good</span>
+          <span><span class="leg-dot" style="background:var(--c-sit-tx)"></span>Situational</span>
+          <span><span class="leg-dot" style="background:var(--c-weak-tx)"></span>Weak</span>
+          <span><span class="leg-dot" style="background:var(--c-trap-tx)"></span>Trap</span>
+        </div>
+      </div>
+
+      <div id="mainContent">
+        <div class="placeholder">
+          <div class="placeholder-icon">⚔</div>
+          <p>Select a champion to see item synergies.<br>
+          <span>The rules engine evaluates each item based on abilities, scalings, and role.</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="item-tooltip" id="itemTooltip"></div>
+
+<!-- Compiled Haxe output -->
+<script src="../build/browser/data/meraki-data.js"></script>
+<script src="../build/browser/forge.js"></script>
+</body>
+</html>
