@@ -151,17 +151,21 @@ class ProfileBuilder {
 		var hasAp:Bool;
 		var hasAd:Bool;
 		var adaptive:String = c.adaptiveType != null ? c.adaptiveType : "";
-		var apCount:Int = c.apModifierCount != null ? c.apModifierCount : 0;
-		var adCount:Int = c.adModifierCount != null ? c.adModifierCount : 0;
+		// Use damage-only modifier counts when available: these exclude AP/AD
+		// modifiers from pure-utility abilities (heals, shields, buffs) whose
+		// damageType is null in the Meraki data.  This prevents champions like
+		// Master Yi (AP only on self-heal W) from being flagged as AP-scaling.
+		var apCount:Int = c.damageApModCount != null ? c.damageApModCount : (c.apModifierCount != null ? c.apModifierCount : 0);
+		var adCount:Int = c.damageAdModCount != null ? c.damageAdModCount : (c.adModifierCount != null ? c.adModifierCount : 0);
 
 		if (c.hasApScaling != null) {
 			// Meraki data available — refine with adaptiveType
 			if (adaptive == "PHYSICAL_DAMAGE") {
-				// AD champion: AP only meaningful with enough AP ratios
+				// AD champion: AP only meaningful with enough AP ratios on damage abilities
 				hasAd = true;
 				hasAp = apCount >= 3;
 			} else if (adaptive == "MAGIC_DAMAGE") {
-				// AP champion: AD only meaningful with enough AD ratios
+				// AP champion: AD only meaningful with enough AD ratios on damage abilities
 				hasAp = true;
 				hasAd = adCount >= 3;
 			} else {

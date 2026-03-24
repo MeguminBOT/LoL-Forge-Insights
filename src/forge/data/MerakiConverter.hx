@@ -56,12 +56,17 @@ class MerakiConverter {
 		var hasAd = false;
 		var apCount = 0;
 		var adCount = 0;
+		var damageApCount = 0;
+		var damageAdCount = 0;
 		if (abilities != null) {
 			for (slot in ["P", "Q", "W", "E", "R"]) {
 				var abs:Array<Dynamic> = Reflect.field(abilities, slot);
 				if (abs == null)
 					continue;
 				for (ab in abs) {
+					// damageType is non-null when the ability deals damage;
+					// null means pure utility (heal, shield, buff).
+					var isDamageAbility:Bool = ab.damageType != null;
 					var effects:Array<Dynamic> = ab.effects;
 					if (effects == null)
 						continue;
@@ -84,10 +89,14 @@ class MerakiConverter {
 									if (u.indexOf("ap") >= 0) {
 										hasAp = true;
 										apCount++;
+										if (isDamageAbility)
+											damageApCount++;
 									}
 									if (u.indexOf("ad") >= 0) {
 										hasAd = true;
 										adCount++;
+										if (isDamageAbility)
+											damageAdCount++;
 									}
 								}
 							}
@@ -156,6 +165,8 @@ class MerakiConverter {
 			adaptiveType: c.adaptiveType != null ? c.adaptiveType : "",
 			apModifierCount: apCount,
 			adModifierCount: adCount,
+			damageApModCount: damageApCount,
+			damageAdModCount: damageAdCount,
 			merakiRoles: rawRoles(c.roles),
 		};
 	}
