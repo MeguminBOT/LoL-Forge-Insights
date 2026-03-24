@@ -62,6 +62,14 @@ class ItemClassifier {
 
 		var hasOnHitPassive = desc.indexOf("on-hit") >= 0 || desc.indexOf("on hit") >= 0;
 
+		var isPhantomHit = desc.indexOf("phantom hit") >= 0
+			|| desc.indexOf("phantom stack") >= 0
+			|| item.name == "Guinsoo's Rageblade";
+
+		var isMultiHit = desc.indexOf("fire additional bolts") >= 0
+			|| desc.indexOf("additional bolts") >= 0
+			|| item.name == "Runaan's Hurricane";
+
 		var hasSpellblade = desc.indexOf("spellblade") >= 0 || desc.indexOf("after using an ability, your next attack") >= 0;
 
 		var hasManaScaling = desc.indexOf("mana charge") >= 0 || desc.indexOf("bonus mana") >= 0 || desc.indexOf("maximum mana") >= 0
@@ -120,6 +128,8 @@ class ItemClassifier {
 			givesTenacity: givesTenacity,
 
 			hasOnHitPassive: hasOnHitPassive,
+			isPhantomHit: isPhantomHit,
+			isMultiHit: isMultiHit,
 			hasSpellblade: hasSpellblade,
 			hasManaScaling: hasManaScaling,
 			hasShieldPassive: hasShieldPassive,

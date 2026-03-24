@@ -267,6 +267,24 @@ class SynergyEngine {
 			reasons = [{delta: -10, r: "Item only works on ranged champions — useless on melee"}];
 		}
 
+		// ── 27. GUINSOO'S RAGEBLADE (Phantom Hit) ─────────────────────────────
+		if (item.isPhantomHit) {
+			if (champ.hasGuinsoosSynergy)
+				pos(3, champ.name + " has on-hit passives that benefit from Phantom Hit");
+			else if (champ.hasOnHit || champ.isMarksman)
+				pos(1, "On-hit user benefits from extra Phantom Hit procs");
+			else if (champ.isMage && !champ.hasOnHit)
+				neg(2, champ.name + " doesn't auto-attack enough for Phantom Hit value");
+		}
+
+		// ── 28. RUNAAN'S HURRICANE (multi-bolt on-hit) ────────────────────────
+		if (item.isMultiHit) {
+			if (champ.range != RangeType.Melee && champ.hasOnHit)
+				pos(2, "Bolts apply " + champ.name + "'s on-hit effects to multiple targets");
+			else if (champ.range != RangeType.Melee && champ.isMarksman)
+				pos(1, "Bolts spread auto-attack damage in teamfights");
+		}
+
 		// ── SPECIAL CASES: Boots ───────────────────────────────────────────────
 		if (item.isBoots) {
 			// Reset to 5 and re-evaluate just for boots-specific logic

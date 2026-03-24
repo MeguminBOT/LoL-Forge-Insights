@@ -18,8 +18,10 @@ typedef ChampionProfile = {
 	var hasAdScaling:Bool;
 
 	// ── Ability traits ────────────────────────────────────────────────────────
-	var hasOnHit:Bool; // strict: "on-hit" or "on hit" only
+	var hasOnHit:Bool; // applies on-hit effects via abilities
+	var hasOnAttack:Bool; // applies on-attack effects via abilities
 	var hasAutoResets:Bool; // ability resets/empowers next auto
+	var hasGuinsoosSynergy:Bool; // benefits from Guinsoo's Phantom Hit
 	var hasDoT:Bool;
 	var hasDash:Bool;
 	var hasShield:Bool;

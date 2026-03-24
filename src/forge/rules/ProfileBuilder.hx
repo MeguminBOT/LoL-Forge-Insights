@@ -35,6 +35,61 @@ class ProfileBuilder {
 		"basic attack timer"
 	];
 
+	// ── Hardcoded champion sets (supplement keyword detection) ──────────────
+	// Source: docs/List of Champion abilities applying on-hit effects.md
+	// and docs/List of Champion abilities applying both on-hit and on-attack effects.md
+	static final ON_HIT_CHAMPIONS = [
+		"Akshan", "Aphelios", "Azir", "Belveth", "Blitzcrank", "Briar",
+		"Camille", "Darius", "DrMundo", "Elise", "Evelynn", "Ezreal",
+		"Fiora", "Fizz", "Gangplank", "Garen", "Graves", "Hecarim",
+		"Irelia", "Jax", "Kassadin", "Katarina", "Kayle", "Lucian",
+		"MasterYi", "MissFortune", "Nasus", "Nidalee", "Pantheon",
+		"Renekton", "Senna", "Shyvana", "Smolder", "Trundle", "Twitch",
+		"Urgot", "Vayne", "Varus", "Viego", "Volibear", "Warwick",
+		"Wukong", "Yasuo", "Yone", "Yorick", "Zeri"
+	];
+
+	// Source: docs/List of Champion abilities applying on-attack effects.md
+	static final ON_ATTACK_CHAMPIONS = [
+		"Akshan", "Azir", "Belveth", "Briar", "Ezreal", "Gangplank",
+		"Graves", "Katarina", "Lucian", "MasterYi", "MissFortune",
+		"Shyvana", "Smolder", "Urgot", "Volibear", "Warwick", "Yasuo",
+		"Yone", "Zeri"
+	];
+
+	// Source: docs/Information about Basic Attacks.md (attack reset list)
+	static final AUTO_RESET_CHAMPIONS = [
+		"Aatrox", "Ashe", "Blitzcrank", "Briar", "Camille", "Chogath",
+		"Darius", "DrMundo", "Ekko", "Elise", "Fiora", "Fizz", "Garen",
+		"Graves", "Hecarim", "Illaoi", "Jax", "Jayce", "Kassadin",
+		"Katarina", "Kayle", "Kindred", "Leona", "Lucian", "Malphite",
+		"Maokai", "MasterYi", "Nasus", "Nautilus", "Nidalee", "Nilah",
+		"Olaf", "Pantheon", "Quinn", "RekSai", "Renekton", "Rengar",
+		"Samira", "Sejuani", "Sett", "Shyvana", "Sivir", "Skarner",
+		"Sona", "Talon", "Trundle", "TwistedFate", "Vayne", "Vi",
+		"Viego", "Volibear", "Wukong", "XinZhao", "Yorick", "Zac",
+		"Zeri", "Zoe",
+		// Special cases: reset timer but not Hail of Blades
+		"Belveth", "Kaisa", "KSante", "Gwen", "Rell", "Riven"
+	];
+
+	// Source: docs/List of Items that interacts with Guinsoos Rageblade.md
+	static final GUINSOOS_CHAMPIONS = [
+		// Stack generation
+		"Akshan", "Diana", "Ekko", "Gnar", "Gwen", "Jax", "Kaisa",
+		"Kalista", "Kayle", "MasterYi", "Neeko", "Orianna", "TahmKench",
+		"Tristana", "TwistedFate", "Twitch", "Vayne", "Vi", "Varus",
+		"XinZhao",
+		// Bonus damage applied twice
+		"Braum", "Elise", "Fizz", "Kassadin", "KogMaw", "Malphite",
+		"Mordekaiser", "Qiyana", "Rumble", "Senna", "Shyvana", "Sion",
+		"Teemo", "Thresh", "Viego", "Volibear", "Warwick",
+		// Cooldown reduction
+		"Nocturne", "Olaf",
+		// Fury generation
+		"RekSai", "Renekton", "Tryndamere"
+	];
+
 	// Hard CC
 	static final STUN_KW = ["stuns", " stun ", "stunned", "stunning"];
 	static final ROOT_KW = [" roots ", " root ", " rooted ", "snare", "snaring", "immobiliz"];
@@ -182,14 +237,16 @@ class ProfileBuilder {
 		var combined = collectText(c);
 
 		// Champions with auto-attack resets implicitly scale with AD
-		var hasAutoResets = containsAny(combined, AUTO_RESET_KW);
+		var hasAutoResets = containsAny(combined, AUTO_RESET_KW) || inSet(c.id, AUTO_RESET_CHAMPIONS);
 		if (hasAutoResets && !hasAd)
 			hasAd = true;
 
 		var primaryDmg = if (hasAp && hasAd) DamageType.Hybrid else if (hasAp) DamageType.Magic else DamageType.Physical;
 
 		// ── Kit trait detection ───────────────────────────────────────────────
-		var hasOnHit = containsAny(combined, ON_HIT_KW);
+		var hasOnHit = containsAny(combined, ON_HIT_KW) || inSet(c.id, ON_HIT_CHAMPIONS);
+		var hasOnAttack = inSet(c.id, ON_ATTACK_CHAMPIONS);
+		var hasGuinsoosSynergy = inSet(c.id, GUINSOOS_CHAMPIONS);
 
 		// CC
 		var hasStun = containsAny(combined, STUN_KW);
@@ -235,7 +292,9 @@ class ProfileBuilder {
 			hasAdScaling: hasAd,
 
 			hasOnHit: hasOnHit,
+			hasOnAttack: hasOnAttack,
 			hasAutoResets: hasAutoResets,
+			hasGuinsoosSynergy: hasGuinsoosSynergy,
 			hasDoT: hasDoT,
 			hasDash: hasDash,
 			hasShield: hasShield,
@@ -296,6 +355,11 @@ class ProfileBuilder {
 			if (text.indexOf(kw) >= 0)
 				return true;
 		return false;
+	}
+
+	/** Returns true if champion id is in the hardcoded set. */
+	static function inSet(id:String, set:Array<String>):Bool {
+		return set.indexOf(id) >= 0;
 	}
 
 	/** Count how many keywords from the list appear in the text. */

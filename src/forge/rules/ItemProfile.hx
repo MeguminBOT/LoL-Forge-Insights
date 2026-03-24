@@ -28,6 +28,8 @@ typedef ItemProfile = {
 
 	// ── Passive types ─────────────────────────────────────────────────────────
 	var hasOnHitPassive:Bool; // OnHit tag OR "on-hit"/"on hit" in description
+	var isPhantomHit:Bool; // Guinsoo's Rageblade (doubles on-hit at stacks)
+	var isMultiHit:Bool; // Runaan's Hurricane (bolts apply on-hit)
 	var hasSpellblade:Bool; // spellblade proc in description
 	var hasManaScaling:Bool; // mana charge / bonus mana / Tear-family
 	var hasShieldPassive:Bool; // grants a shield
