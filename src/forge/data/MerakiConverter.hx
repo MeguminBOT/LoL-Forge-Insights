@@ -205,6 +205,28 @@ class MerakiConverter {
 		var from:Array<String> = intArrToStr(item.buildsFrom);
 		var into:Array<String> = intArrToStr(item.buildsInto);
 
+		// Hide jungle pets (nicknames contain "jungle") and
+		// gamemode-specific starters (Guardian's + STARTER rank)
+		var hidden = item.removed == true;
+		if (!hidden) {
+			var nicknames:Array<Dynamic> = item.nicknames;
+			if (nicknames != null)
+				for (n in nicknames)
+					if (Std.string(n).toLowerCase() == "jungle") {
+						hidden = true;
+						break;
+					}
+		}
+		if (!hidden) {
+			var name:String = item.name;
+			if (name != null && StringTools.startsWith(name, "Guardian's") && rank != null)
+				for (r in rank)
+					if (Std.string(r) == "STARTER") {
+						hidden = true;
+						break;
+					}
+		}
+
 		return {
 			name: item.name,
 			description: desc,
@@ -223,7 +245,7 @@ class MerakiConverter {
 			depth: item.tier,
 			consumed: false,
 			inStore: shop != null && shop.purchasable == true,
-			hideFromAll: item.removed == true,
+			hideFromAll: hidden,
 			requiredChampion: item.requiredChampion,
 			requiredAlly: item.requiredAlly,
 			effect: null,
