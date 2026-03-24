@@ -156,6 +156,7 @@ class MerakiConverter {
 			adaptiveType: c.adaptiveType != null ? c.adaptiveType : "",
 			apModifierCount: apCount,
 			adModifierCount: adCount,
+			merakiRoles: rawRoles(c.roles),
 		};
 	}
 
@@ -226,10 +227,33 @@ class MerakiConverter {
 			requiredChampion: item.requiredChampion,
 			requiredAlly: item.requiredAlly,
 			effect: null,
+			merakiTags: merakiShopTags(shop),
 		};
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
+
+	public static function rawRoles(roles:Dynamic):Array<String> {
+		var result:Array<String> = [];
+		var arr:Array<Dynamic> = roles;
+		if (arr == null)
+			return result;
+		for (role in arr)
+			result.push(Std.string(role));
+		return result;
+	}
+
+	static function merakiShopTags(shop:Dynamic):Array<String> {
+		var result:Array<String> = [];
+		if (shop == null)
+			return result;
+		var tags:Array<Dynamic> = shop.tags;
+		if (tags == null)
+			return result;
+		for (t in tags)
+			result.push(Std.string(t));
+		return result;
+	}
 
 	public static function rolesToTags(roles:Dynamic):Array<String> {
 		var tags:Array<String> = [];

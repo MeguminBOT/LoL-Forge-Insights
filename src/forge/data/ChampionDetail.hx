@@ -17,4 +17,5 @@ typedef ChampionDetail = {
 	var ?adaptiveType:String; // "PHYSICAL_DAMAGE" or "MAGIC_DAMAGE"
 	var ?apModifierCount:Int; // count of AP-scaling modifiers across all abilities
 	var ?adModifierCount:Int; // count of AD-scaling modifiers across all abilities
+	var ?merakiRoles:Array<String>; // raw Meraki roles (SKIRMISHER, JUGGERNAUT, etc.)
 }

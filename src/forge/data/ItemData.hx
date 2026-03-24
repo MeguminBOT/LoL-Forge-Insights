@@ -18,4 +18,5 @@ typedef ItemData = {
 	var ?requiredAlly:String;
 	var ?effect:Dynamic;
 	var ?pickRate:Float; // optional from telemetry / analytics feed
+	var ?merakiTags:Array<String>; // raw Meraki shop tags (FIGHTER, MARKSMAN, ONHIT_EFFECTS, etc.)
 }
