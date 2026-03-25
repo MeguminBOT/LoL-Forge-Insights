@@ -206,12 +206,8 @@ class ProfileBuilder {
 		var hasAp:Bool;
 		var hasAd:Bool;
 		var adaptive:String = c.adaptiveType != null ? c.adaptiveType : "";
-		// Use damage-only modifier counts when available: these exclude AP/AD
-		// modifiers from pure-utility abilities (heals, shields, buffs) whose
-		// damageType is null in the Meraki data.  This prevents champions like
-		// Master Yi (AP only on self-heal W) from being flagged as AP-scaling.
-		var apCount:Int = c.damageApModCount != null ? c.damageApModCount : (c.apModifierCount != null ? c.apModifierCount : 0);
-		var adCount:Int = c.damageAdModCount != null ? c.damageAdModCount : (c.adModifierCount != null ? c.adModifierCount : 0);
+		var apCount:Int = c.damageApModCount != null ? c.damageApModCount : 0;
+		var adCount:Int = c.damageAdModCount != null ? c.damageAdModCount : 0;
 
 		if (c.hasApScaling != null) {
 			// Meraki data available — refine with adaptiveType
@@ -224,7 +220,7 @@ class ProfileBuilder {
 				hasAp = true;
 				hasAd = adCount >= 3;
 			} else {
-				// Unknown adaptive: trust raw flags
+				// Unknown adaptive: trust hasApScaling/hasAdScaling flags
 				hasAp = c.hasApScaling;
 				hasAd = c.hasAdScaling != null && c.hasAdScaling;
 			}

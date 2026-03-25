@@ -137,7 +137,7 @@ class MerakiConverter {
 		var toughness:Int = ar != null && ar.toughness != null ? ar.toughness : 3;
 		var difficulty:Int = ar != null && ar.difficulty != null ? ar.difficulty : 2;
 		var adaptiveType:String = c.adaptiveType != null ? c.adaptiveType : "";
-		var magicRating = if (adaptiveType == "MAGIC_DAMAGE") 7 else if (hasAp) 5 else 2;
+		var magicRating = if (adaptiveType == "MAGIC_DAMAGE") 7 else if (damageApCount > 0) 5 else 2;
 
 		return {
 			id: champKey,
@@ -160,8 +160,8 @@ class MerakiConverter {
 				difficulty: Std.int(Math.min(10, difficulty * 2)),
 			},
 			lore: c.lore != null ? c.lore : "",
-			hasApScaling: hasAp,
-			hasAdScaling: hasAd,
+			hasApScaling: damageApCount > 0,
+			hasAdScaling: damageAdCount > 0 || hasAd,
 			adaptiveType: c.adaptiveType != null ? c.adaptiveType : "",
 			apModifierCount: apCount,
 			adModifierCount: adCount,
